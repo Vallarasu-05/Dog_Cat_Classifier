@@ -14,7 +14,7 @@ DRIVE_FILE_ID = "1Z2_dFcl0KhJvcEtYFyCZRKyyO9HfiSAQ"  # Your Google Drive file ID
 DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
 
 if not os.path.exists(MODEL_PATH):
-    os.makedirs("models", exist_ok=True)
+    os.makedirs("model", exist_ok=True)
     st.info("Downloading model from Google Drive...")
     
     # Download with progress

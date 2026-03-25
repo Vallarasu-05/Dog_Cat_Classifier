@@ -2,17 +2,36 @@ import streamlit as st
 import numpy as np
 import cv2
 import tensorflow as tf
+import os
+import gdown
 from utils.preprocess import preprocess_image
 
+# --------------------------
+# Download model from Google Drive if not exists
+# --------------------------
+MODEL_PATH = "models/model.h5"
+DRIVE_FILE_ID = "1Y7aHXA2edK4jIfYVEaIVuI9po1IUgOVc"  # Replace with your Google Drive file ID
+DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
+
+if not os.path.exists(MODEL_PATH):
+    os.makedirs("models", exist_ok=True)
+    st.info("Downloading model from Google Drive...")
+    gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
+    st.success("Model downloaded successfully!")
+
+# --------------------------
 # Load model
+# --------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("models/model.h5", compile=False)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     return model
 
 model = load_model()
 
-# UI
+# --------------------------
+# Streamlit UI
+# --------------------------
 st.title("🐶 Dog vs Cat 🐱 Classifier")
 st.write("Upload an image and click Predict")
 
@@ -25,15 +44,12 @@ if uploaded_file is not None:
 
     st.image(img, caption="Uploaded Image", use_column_width=True)
 
-    # 👉 Predict button
+    # Predict button
     if st.button("Predict"):
-        # Preprocess
         processed = preprocess_image(img)
-
-        # Prediction
         prediction = model.predict(processed)[0][0]
 
-        # Output
+        # Display result
         if prediction > 0.5:
             st.success(f"🐶 Dog ({prediction:.2f})")
         else:

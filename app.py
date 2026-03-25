@@ -9,8 +9,8 @@ from utils.preprocess import preprocess_image
 # --------------------------
 # Download model from Google Drive if not exists
 # --------------------------
-MODEL_PATH = "models/model.h5"
-DRIVE_FILE_ID = "1Y7aHXA2edK4jIfYVEaIVuI9po1IUgOVc"  # Your Google Drive file ID
+MODEL_PATH = "model/model.h5"
+DRIVE_FILE_ID = "1Z2_dFcl0KhJvcEtYFyCZRKyyO9HfiSAQ"  # Your Google Drive file ID
 DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
 
 if not os.path.exists(MODEL_PATH):

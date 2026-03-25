@@ -10,13 +10,17 @@ from utils.preprocess import preprocess_image
 # Download model from Google Drive if not exists
 # --------------------------
 MODEL_PATH = "models/model.h5"
-DRIVE_FILE_ID = "1Y7aHXA2edK4jIfYVEaIVuI9po1IUgOVc"  # Replace with your Google Drive file ID
+DRIVE_FILE_ID = "1Y7aHXA2edK4jIfYVEaIVuI9po1IUgOVc"  # Your Google Drive file ID
 DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
 
 if not os.path.exists(MODEL_PATH):
     os.makedirs("models", exist_ok=True)
     st.info("Downloading model from Google Drive...")
-    gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
+    
+    # Download with progress
+    with st.spinner("Downloading model..."):
+        gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
+    
     st.success("Model downloaded successfully!")
 
 # --------------------------
@@ -24,8 +28,12 @@ if not os.path.exists(MODEL_PATH):
 # --------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-    return model
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+        return model
+    except Exception as e:
+        st.error("Failed to load model. Make sure the model is compatible with this TensorFlow version.")
+        st.stop()
 
 model = load_model()
 
@@ -46,11 +54,13 @@ if uploaded_file is not None:
 
     # Predict button
     if st.button("Predict"):
-        processed = preprocess_image(img)
-        prediction = model.predict(processed)[0][0]
+        try:
+            processed = preprocess_image(img)
+            prediction = model.predict(processed)[0][0]
 
-        # Display result
-        if prediction > 0.5:
-            st.success(f"🐶 Dog ({prediction:.2f})")
-        else:
-            st.success(f"🐱 Cat ({1 - prediction:.2f})")
+            if prediction > 0.5:
+                st.success(f"🐶 Dog ({prediction:.2f})")
+            else:
+                st.success(f"🐱 Cat ({1 - prediction:.2f})")
+        except Exception as e:
+            st.error(f"Prediction failed: {e}")

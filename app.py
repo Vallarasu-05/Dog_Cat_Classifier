@@ -5,24 +5,20 @@ import tensorflow as tf
 from huggingface_hub import hf_hub_download
 from utils.preprocess import preprocess_image
 
-# -----------------------------
-# Load model from Hugging Face
-# -----------------------------
+# Load model from HF
 @st.cache_resource
 def load_model():
-    # Download the model file from HF
+    # Download model file from HF repo
     model_path = hf_hub_download(
-        repo_id="Vallarasu-05/Dog_Cat_Classifier",  # <-- your HF repo
-        filename="model/model.h5"
+        repo_id="Vallarasu-05/Dog_Cat_Classifier",
+        filename="model.h5"
     )
     model = tf.keras.models.load_model(model_path, compile=False)
     return model
 
 model = load_model()
 
-# -----------------------------
-# Streamlit UI
-# -----------------------------
+# UI
 st.title("🐶 Dog vs Cat 🐱 Classifier")
 st.write("Upload an image and click Predict")
 
@@ -32,17 +28,12 @@ if uploaded_file is not None:
     # Read image
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
-
     st.image(img, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Predict"):
-        # Preprocess
         processed = preprocess_image(img)
-
-        # Prediction
         prediction = model.predict(processed)[0][0]
 
-        # Output
         if prediction > 0.5:
             st.success(f"🐶 Dog ({prediction:.2f})")
         else:

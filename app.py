@@ -2,44 +2,27 @@ import streamlit as st
 import numpy as np
 import cv2
 import tensorflow as tf
-import os
-import gdown
+from huggingface_hub import hf_hub_download
 from utils.preprocess import preprocess_image
 
-# --------------------------
-# Download model from Google Drive if not exists
-# --------------------------
-MODEL_PATH = "model/model.h5"
-DRIVE_FILE_ID = "1Z2_dFcl0KhJvcEtYFyCZRKyyO9HfiSAQ"  # Your Google Drive file ID
-DRIVE_URL = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
-
-if not os.path.exists(MODEL_PATH):
-    os.makedirs("model", exist_ok=True)
-    st.info("Downloading model from Google Drive...")
-    
-    # Download with progress
-    with st.spinner("Downloading model..."):
-        gdown.download(DRIVE_URL, MODEL_PATH, quiet=False)
-    
-    st.success("Model downloaded successfully!")
-
-# --------------------------
-# Load model
-# --------------------------
+# -----------------------------
+# Load model from Hugging Face
+# -----------------------------
 @st.cache_resource
 def load_model():
-    try:
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        return model
-    except Exception as e:
-        st.error("Failed to load model. Make sure the model is compatible with this TensorFlow version.")
-        st.stop()
+    # Download the model file from HF
+    model_path = hf_hub_download(
+        repo_id="Vallarasu-05/Dog_Cat_Classifier",  # <-- your HF repo
+        filename="model/model.h5"
+    )
+    model = tf.keras.models.load_model(model_path, compile=False)
+    return model
 
 model = load_model()
 
-# --------------------------
+# -----------------------------
 # Streamlit UI
-# --------------------------
+# -----------------------------
 st.title("🐶 Dog vs Cat 🐱 Classifier")
 st.write("Upload an image and click Predict")
 
@@ -52,15 +35,15 @@ if uploaded_file is not None:
 
     st.image(img, caption="Uploaded Image", use_column_width=True)
 
-    # Predict button
     if st.button("Predict"):
-        try:
-            processed = preprocess_image(img)
-            prediction = model.predict(processed)[0][0]
+        # Preprocess
+        processed = preprocess_image(img)
 
-            if prediction > 0.5:
-                st.success(f"🐶 Dog ({prediction:.2f})")
-            else:
-                st.success(f"🐱 Cat ({1 - prediction:.2f})")
-        except Exception as e:
-            st.error(f"Prediction failed: {e}")
+        # Prediction
+        prediction = model.predict(processed)[0][0]
+
+        # Output
+        if prediction > 0.5:
+            st.success(f"🐶 Dog ({prediction:.2f})")
+        else:
+            st.success(f"🐱 Cat ({1 - prediction:.2f})")

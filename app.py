@@ -3,32 +3,32 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from huggingface_hub import hf_hub_download
-from utils.preprocess import preprocess_image  # your preprocessing function
+import tarfile
+import os
+from utils.preprocess import preprocess_image
 
 # -----------------------------
-# Streamlit App Config
-# -----------------------------
-st.set_page_config(page_title="🐶 Dog vs Cat Classifier 🐱", layout="centered")
-
-# -----------------------------
-# Load model from HF hub
+# Load model from Hugging Face
 # -----------------------------
 @st.cache_resource
 def load_model():
-    """
-    Load the Keras model directly from Hugging Face repository.
-    The model is cached in Streamlit runtime to avoid re-downloading.
-    """
-    # If private repo, add token=st.secrets["HUGGINGFACE_TOKEN"]
-    model_path = hf_hub_download(
-        repo_id="Vallarasu-05/Dog_Cat_Classifier",  # HF repo name
-        filename="model/model.h5",                  # path inside HF repo
-        # token=st.secrets["HUGGINGFACE_TOKEN"]    # Uncomment if private
+    # Download from HF
+    model_archive = hf_hub_download(
+        repo_id="Vallarasu-05/Dog_Cat_Classifier",  # HF repo where model is
+        filename="saved_model.tar.gz"
     )
-    model = tf.keras.models.load_model(model_path, compile=False)
+    
+    # Extract to temporary directory
+    extract_dir = "/tmp/model"
+    if not os.path.exists(extract_dir):
+        os.makedirs(extract_dir)
+        with tarfile.open(model_archive, "r:gz") as tar:
+            tar.extractall(path=extract_dir)
+    
+    # Load TensorFlow SavedModel
+    model = tf.keras.models.load_model(os.path.join(extract_dir, "saved_model"))
     return model
 
-# Load model once
 model = load_model()
 
 # -----------------------------
@@ -40,19 +40,16 @@ st.write("Upload an image and click Predict")
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
 if uploaded_file is not None:
-    # Convert uploaded file to OpenCV image
+    # Read image
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    img = cv2.imdecode(file_bytes, 1)
+
     st.image(img, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Predict"):
-        # Preprocess image
-        processed = preprocess_image(img)  # should return shape (1, 128, 128, 3) if your model expects 128x128
-
-        # Prediction
+        processed = preprocess_image(img)
         prediction = model.predict(processed)[0][0]
 
-        # Output
         if prediction > 0.5:
             st.success(f"🐶 Dog ({prediction:.2f})")
         else:

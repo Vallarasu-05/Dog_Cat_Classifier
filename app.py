@@ -11,7 +11,7 @@ def load_model():
     # Download model file from HF repo
     model_path = hf_hub_download(
         repo_id="Vallarasu-05/Dog_Cat_Classifier",
-        filename="model.h5"
+        filename="model/model.h5"
     )
     model = tf.keras.models.load_model(model_path, compile=False)
     return model
